@@ -3,7 +3,9 @@
 
 import pygame
 import random
+import math
 from settings import *
+from effects import draw_glow_rect
 
 class PowerUp:
     """Falling power-up capsule."""

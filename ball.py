@@ -4,6 +4,7 @@ import pygame
 import random
 import math
 from settings import *
+from effects import draw_glow
 
 class Ball:
     """The game ball with physics-based movement."""
@@ -19,6 +20,8 @@ class Ball:
         self.vy = 0
         self.attached = True
         self.attached_offset = 0
+        self.x = SCREEN_WIDTH // 2
+        self.y = SCREEN_HEIGHT // 2
         self.update_rect()
 
     def update_rect(self):

@@ -13,6 +13,7 @@ from powerup import PowerUpManager
 from menu import Menu
 from sounds import init_sounds
 from effects import ParticleSystem, ScreenShake, create_stars, update_stars, draw_starfield
+from head_tracking import init_head_tracking, get_head_position, stop_head_tracking
 
 class Game:
     """Main game class managing all states and logic."""
@@ -20,7 +21,7 @@ class Game:
         pygame.init()
         pygame.mixer.init()
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        pygame.display.set_caption("UEL Brick Smash 2.0: Duo Deadline")
+        pygame.display.set_caption("UEL Brick Smash 2.0: Duo Deadline - Head Control Mode")
         self.clock = pygame.time.Clock()
         self.font = pygame.font.Font(None, FONT_MEDIUM)
         self.small_font = pygame.font.Font(None, FONT_SMALL)
@@ -28,6 +29,10 @@ class Game:
         # Initialize systems
         self.sounds = init_sounds()
         self.sounds.set_volume(0.6)
+
+        # Head tracking state
+        self.head_control_enabled = False
+        self.head_tracker = None
 
         # Game state
         self.state = MAIN_MENU
@@ -93,9 +98,12 @@ class Game:
 
     def handle_playing(self, keys):
         """Handle gameplay state."""
+        # Get head position for head control mode
+        head_pos = get_head_position() if self.head_control_enabled else None
+        
         # Update paddles
         for paddle in self.paddles:
-            paddle.update(keys, 0, self.game_mode)
+            paddle.update(keys, 0, self.game_mode, head_pos=head_pos)
 
             # Check launch
             if not self.ball.attached:
@@ -235,9 +243,11 @@ class Game:
         elif self.state == VICTORY:
             self.draw_victory()
 
-        # Apply screen shake
+        # Apply screen shake (render to temp surface, then blit with offset)
         if self.screen_shake.offset_x != 0 or self.screen_shake.offset_y != 0:
-            self.screen.blit(pygame.transform.offset(self.screen, self.screen_shake.offset_x, self.screen_shake.offset_y), (0, 0))
+            offset_surf = self.screen.copy()
+            self.screen.fill(BACKGROUND)
+            self.screen.blit(offset_surf, (self.screen_shake.offset_x, self.screen_shake.offset_y))
             self.screen_shake.offset_x = 0
             self.screen_shake.offset_y = 0
 
@@ -322,6 +332,11 @@ class Game:
         # Mode indicator
         mode_text = self.small_font.render(f"MODE: {self.game_mode.upper()}", True, NEON_WHITE)
         self.screen.blit(mode_text, (SCREEN_WIDTH // 2 - mode_text.get_width() // 2, 20))
+        
+        # Head control indicator
+        if self.head_control_enabled:
+            head_text = self.small_font.render("HEAD CONTROL ACTIVE", True, NEON_GREEN)
+            self.screen.blit(head_text, (SCREEN_WIDTH // 2 - head_text.get_width() // 2, 45))
 
     def draw_countdown(self):
         """Draw countdown number."""
@@ -408,6 +423,11 @@ class Game:
                     self.game_mode = "duo"
                     self.reset_game()
                     self.start_countdown()
+                elif action == "head_control":
+                    self.game_mode = "head_control"
+                    self.head_control_enabled = init_head_tracking()
+                    self.reset_game()
+                    self.start_countdown()
                 elif action == "credits":
                     self.state = CREDITS
                 self.menu.update()
@@ -427,9 +447,18 @@ class Game:
 
             elif self.state == GAME_OVER:
                 self.handle_game_over()
+                if keys[pygame.K_RETURN] or keys[pygame.K_SPACE]:
+                    if self.head_control_enabled:
+                        stop_head_tracking()
+                        self.head_control_enabled = False
 
             elif self.state == VICTORY:
                 self.handle_victory(dt)
+                keys = pygame.key.get_pressed()
+                if self.victory_timer <= 0 and (keys[pygame.K_RETURN] or keys[pygame.K_SPACE]):
+                    if self.head_control_enabled:
+                        stop_head_tracking()
+                        self.head_control_enabled = False
 
             # Draw current state
             self.draw()

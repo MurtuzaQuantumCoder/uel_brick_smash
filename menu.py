@@ -7,7 +7,7 @@ class Menu:
     """Main menu with options and credits."""
     def __init__(self):
         self.selected_option = 0
-        self.options = ["SOLO DEADLINE", "PARTNER STUDY", "CREDITS"]
+        self.options = ["SOLO DEADLINE", "PARTNER STUDY", "HEAD CONTROL", "CREDITS"]
         self.option_rects = []
         self.title_color = NEON_MAGENTA
         self.selected_color = NEON_CYAN
@@ -32,6 +32,8 @@ class Menu:
         elif self.selected_option == 1:
             return "duo"
         elif self.selected_option == 2:
+            return "head_control"
+        elif self.selected_option == 3:
             return "credits"
         return None
 
@@ -40,7 +42,7 @@ class Menu:
         surface.fill(BACKGROUND)
 
         # Draw animated stars
-        from effects import draw_starfield, update_stars
+        from effects import draw_starfield, update_stars, create_stars
         if not hasattr(self, 'stars'):
             self.stars = create_stars(STAR_COUNT)
         update_stars(self.stars)

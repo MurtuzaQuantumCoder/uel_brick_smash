@@ -4,6 +4,7 @@
 import pygame
 import random
 from settings import *
+from effects import draw_glow_rect
 
 class Brick:
     """A single brick with UEL-themed label."""

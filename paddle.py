@@ -4,6 +4,7 @@
 
 import pygame
 from settings import *
+from effects import draw_glow_rect
 
 class Paddle:
     """A player-controlled paddle."""
@@ -23,8 +24,8 @@ class Paddle:
         self.width_boost_timer = 0
         self.speed_boost_timer = 0
 
-    def update(self, keys, dt, game_mode):
-        """Update paddle position based on key input."""
+    def update(self, keys, dt, game_mode, head_pos=None):
+        """Update paddle position based on key input or head tracking."""
         # Check power-up timers
         if self.width_boost_timer > 0:
             self.width_boost_timer -= dt
@@ -36,11 +37,21 @@ class Paddle:
             if self.speed_boost_timer <= 0:
                 self.speed = self.base_speed
 
-        # Movement
+        # Movement - use head position if provided (head control mode)
         move_left = False
         move_right = False
 
-        if self.player_num == 1:
+        if head_pos is not None:
+            # Head control: map head position to movement with deadzone
+            deadzone = 0.1
+            center = 0.5
+            threshold = deadzone
+            
+            if head_pos < center - threshold:
+                move_left = True
+            elif head_pos > center + threshold:
+                move_right = True
+        elif self.player_num == 1:
             move_left = keys[pygame.K_LEFT]
             move_right = keys[pygame.K_RIGHT]
         elif self.player_num == 2 and game_mode == "duo":
